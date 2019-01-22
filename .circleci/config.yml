@@ -2,7 +2,7 @@ version: 2
 jobs:
   jstest:
     docker:
-      - image: circleci/golang:1.11-node-browsers
+      - image: circleci/golang:1.12-rc-node-browsers
     working_directory: /go/src/github.com/influxdata/influxdb
     steps:
       - checkout
@@ -25,7 +25,7 @@ jobs:
 
   gotest:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.12-rc
     environment:
       GOCACHE: /tmp/go-cache
       GOFLAGS: "-mod=readonly -p=4" # Go on Circle thinks 32 CPUs are available, but there aren't.
@@ -59,7 +59,7 @@ jobs:
       # In go1.11, running go mod vendor when go.mod contains replace entries, "taints" go.sum, even with -mod=readonly.
       # See https://github.com/golang/go/issues/27868.
       # Clean up go.sum so that we save to the same module key we attempted to restore from.
-      # TODO: remove this call to git checkout after we are on go1.12.
+      # TODO: remove this call to git checkout after we are on go1.12 final.
       - run: git checkout -- go.sum
 
       - save_cache:
@@ -77,7 +77,7 @@ jobs:
 
   build:
     docker:
-      - image: circleci/golang:1.11-node-browsers
+      - image: circleci/golang:1.12-rc-node-browsers
     environment:
       GOCACHE: /tmp/go-cache
       GOFLAGS: "-mod=readonly -p=4" # Go on Circle thinks 32 CPUs are available, but there aren't.
@@ -102,7 +102,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/golang:1.11-node-browsers
+      - image: circleci/golang:1.12-rc-node-browsers
     environment:
       GOCACHE: /tmp/go-cache
       GOFLAGS: "-mod=readonly -p=4" # Go on Circle thinks 32 CPUs are available, but there aren't.

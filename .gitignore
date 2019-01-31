@@ -21,6 +21,9 @@ influxd.bolt
 /transpilerd
 /bin
 
+# Project tool binaries.
+/staticcheck
+
 ui/node_modules
 ui/npm-error.log
 ui/yarn.lock

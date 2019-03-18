@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/influxdata/influxdb/kit/tracing"
 	"github.com/influxdata/influxdb/query"
 	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
@@ -151,16 +151,16 @@ func (s *ProxyQueryService) Query(ctx context.Context, w io.Writer, req *query.P
 	defer span.Finish()
 	u, err := newURL(s.Addr, proxyQueryPath)
 	if err != nil {
-		return flux.Statistics{}, tracing.LogError(span, err)
+		return flux.Statistics{}, tracing.LogError(span, errors.Wrap(err, "error forming URL"))
 	}
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(req); err != nil {
-		return flux.Statistics{}, tracing.LogError(span, err)
+		return flux.Statistics{}, tracing.LogError(span, errors.Wrap(err, "error encoding JSON body"))
 	}
 
 	hreq, err := http.NewRequest("POST", u.String(), &body)
 	if err != nil {
-		return flux.Statistics{}, tracing.LogError(span, err)
+		return flux.Statistics{}, tracing.LogError(span, errors.Wrap(err, "error creating HTTP request"))
 	}
 
 	hreq = hreq.WithContext(ctx)
@@ -169,7 +169,7 @@ func (s *ProxyQueryService) Query(ctx context.Context, w io.Writer, req *query.P
 	hc := newClient(u.Scheme, s.InsecureSkipVerify)
 	resp, err := hc.Do(hreq)
 	if err != nil {
-		return flux.Statistics{}, tracing.LogError(span, err)
+		return flux.Statistics{}, tracing.LogError(span, errors.Wrap(err, "error performing HTTP request"))
 	}
 	defer resp.Body.Close()
 	if err := CheckError(resp); err != nil {
@@ -177,13 +177,13 @@ func (s *ProxyQueryService) Query(ctx context.Context, w io.Writer, req *query.P
 	}
 
 	if _, err = io.Copy(w, resp.Body); err != nil {
-		return flux.Statistics{}, tracing.LogError(span, err)
+		return flux.Statistics{}, tracing.LogError(span, errors.Wrap(err, "error copying response body"))
 	}
 
 	data := []byte(resp.Trailer.Get(QueryStatsTrailer))
 	var stats flux.Statistics
 	if err := json.Unmarshal(data, &stats); err != nil {
-		return stats, tracing.LogError(span, err)
+		return stats, tracing.LogError(span, errors.Wrap(err, "error unmarshaling statistics"))
 	}
 
 	return stats, nil

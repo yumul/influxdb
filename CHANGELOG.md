@@ -7,6 +7,7 @@
 1. [12655](https://github.com/influxdata/influxdb/pull/12655): Add a variable control bar to dashboards to select values for variables.
 1. [12706](https://github.com/influxdata/influxdb/pull/12706): Add ability to add variable to script from the side menu.
 1. [12791](https://github.com/influxdata/influxdb/pull/12791): Use time range for metaqueries in Data Explorer and Cell Editor Overlay
+1. [12826](https://github.com/influxdata/influxdb/pull/12826): Enable copying error messages to the clipboard from dashboard cells
 
 ### Bug Fixes
 

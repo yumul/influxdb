@@ -1,18 +1,15 @@
 package launcher_test
 
 import (
-	"fmt"
-	"io/ioutil"
-	nethttp "net/http"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/influxdata/influxdb"
-	"github.com/influxdata/influxdb/http"
+	"github.com/influxdata/influxdb/cmd/influxd/launcher"
 )
 
 func TestStorage_WriteAndQuery(t *testing.T) {
-	l := RunLauncherOrFail(t, ctx)
+	l := launcher.RunTestLauncherOrFail(t, ctx)
 
 	org1 := l.OnBoardOrFail(t, &influxdb.OnboardingRequest{
 		User:     "USER-1",
@@ -46,39 +43,4 @@ func TestStorage_WriteAndQuery(t *testing.T) {
 	if got := l.FluxQueryOrFail(t, org2.Org, org2.Auth.Token, qs); !cmp.Equal(got, exp) {
 		t.Errorf("unexpected query results -got/+exp\n%s", cmp.Diff(got, exp))
 	}
-}
-
-// WriteOrFail attempts a write to the organization and bucket identified by to or fails if there is an error.
-func (l *Launcher) WriteOrFail(tb testing.TB, to *influxdb.OnboardingResults, data string) {
-	tb.Helper()
-	resp, err := nethttp.DefaultClient.Do(l.NewHTTPRequestOrFail(tb, "POST", fmt.Sprintf("/api/v2/write?org=%s&bucket=%s", to.Org.ID, to.Bucket.ID), to.Auth.Token, data))
-	if err != nil {
-		tb.Fatal(err)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		tb.Fatal(err)
-	}
-
-	if err := resp.Body.Close(); err != nil {
-		tb.Fatal(err)
-	}
-
-	if resp.StatusCode != nethttp.StatusNoContent {
-		tb.Fatalf("unexpected status code: %d, body: %s, headers: %v", resp.StatusCode, body, resp.Header)
-	}
-}
-
-// FluxQueryOrFail performs a query to the specified organization and returns the results
-// or fails if there is an error.
-func (l *Launcher) FluxQueryOrFail(tb testing.TB, org *influxdb.Organization, token string, query string) string {
-	tb.Helper()
-
-	b, err := http.SimpleQuery(l.URL(), query, org.Name, token)
-	if err != nil {
-		tb.Fatal(err)
-	}
-
-	return string(b)
 }
